@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html>
+  <head>
+      
+    <!-- source for chartist.js library: https://gionkunz.github.io/chartist-js/index.html -->
+    <link rel="stylesheet" href="http://cdn.jsdelivr.net/chartist.js/latest/chartist.min.css"> <!-- needed for chartist.js graphs -->
+    <script src="http://cdn.jsdelivr.net/chartist.js/latest/chartist.min.js"></script> <!-- needed for chartist.js graphs -->
+    
+    <!-- source for basic jquery slider: https://jqueryui.com/slider/ -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css"> <!-- this looks needed -->
+    <script src="https://code.jquery.com/jquery-1.12.4.js"></script> <!-- needed for jquery sliding selector graphs -->
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script> <!-- needed for jquery sliding selector graphs -->
+    
+    <!-- source for jquery slider labels: http://simeydotme.github.io/jQuery-ui-Slider-Pips/ -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.10.4/themes/flick/jquery-ui.css">
+    <link rel="stylesheet" href="jquery-ui-slider-pips.css">
+    <script src="jquery-ui-slider-pips.js"></script> <!-- needed for chartist.js graphs -->
+    
+    <!-- jquery slider: http://api.jqueryui.com/slider/ -->
+    <script>
+        $( function() 
+        {
+            $( "#slider" ).slider({
+                min: 1, max: 10, value: 3, step: 1
+            }).slider("pips");
+        } );
+
+            
+    </script>
+    
+    <style>
+        #content{
+            padding-left: 10%;
+        }
+                
+        #slider{
+            padding-left: 5%;
+        }
+        
+        .ct-perfect-fourth:before{
+            padding-bottom: 200px;
+        }
+        
+        .ct-series-a .ct-line,
+        .ct-series-a .ct-point {
+          stroke:red;
+        }
+        
+        .ct-series-a .ct-area {
+          fill: red;
+        }
+
+        .ct-series-b .ct-line,
+        .ct-series-b .ct-point {
+          stroke: blue;
+        }
+        
+        .ct-series-b .ct-area {
+          fill: blue;
+        }
+        
+    </style>
+  
+   
+    
+  </head>
+<body>
+<div id="content">
+    <h1>Chartist.js Graph Test</h1>
+    <p>This page contains examples of ways to dynamically render and change the values of graphs using Javascript.<br/> 
+        The graphs are rendered with the Chartist.js library.<br/> 
+        The slider is rendered with jQuery.<br/> 
+        <br/> 
+        The data in the charts starts in an array. The value selected determines at what interval values are pulled from the array to render the chart.<br/> 
+    </p>
+    <br/>
+    <h2>HTML5 Number Picker Example</h2>
+    <label for="nth_scale">Display Every</label>
+    <input id="nth_scale" type="number" value="3" min="1" class=mod"/> Values.
+    <br/>
+    <div class="ct-chart ct-perfect-fourth" id="chart1" style="width:40%;"></div>
+    <h2>jQuery Slider Example</h2>
+    <br/>
+    <div id="slider" style="width:30%;"></div>
+    <br/>
+    <br/>
+    <div class="ct-chart ct-perfect-fourth" id="chart2" style="width:40%;"></div>
+</div>
+
+<script>
+  
+  //define how frequently we want to sample from the array
+  //if nth = 1, then display every value
+  //if nth = 2, then display every other value
+  //if nth = 10, then display every 10th value
+  var nth = 3;
+  var nth2 = 3;
+  
+  //variables to store chart references
+  var chart1;
+  var chart2;
+  
+  //Define the initial array values for the graph. This will come from the database.
+  //Dev Note: Replace these with values read from the databse
+  //chart 1
+  var original_array_1_values = [100, 120, 180, 200, 90, 100, 120, 180, 200, 90, 100, 120, 180, 200, 90, 100, 120, 180, 200, 90, 100, 120, 180, 200]; //these are the values of the first line
+  var original_array_2_values = [20, 35, 65, 125, 245, 20, 35, 65, 125, 245, 20, 35, 65, 125, 245, 20, 35, 65, 125, 245, 20, 35, 65, 125]; //these are the values of the second line
+  var original_array_labels = ['0:00', '1:00', '2:00', '3:00', '4:00', '5:00', '6:00', '7:00' ,'8:00', '9:00', '10:00', '11:00' ,'12:00', '13:00', '14:00', '15:00' ,'16:00', '17:00', '18:00', '19:00' ,'20:00', '21:00', '22:00', '23:00']; //these are the labels that will appear at the bottom of the chart
+  //chart 2
+  var original_array_1_values2 = [100, 120, 180, 200, 90, 100, 120, 180, 200, 90, 100, 120, 180, 200, 90, 100, 120, 180, 200, 90, 100, 120, 180, 200]; //these are the values of the first line
+  var original_array_2_values2 = [20, 35, 65, 125, 245, 20, 35, 65, 125, 245, 20, 35, 65, 125, 245, 20, 35, 65, 125, 245, 20, 35, 65, 125]; //these are the values of the second line
+  var original_array_labels2 = ['0:00', '1:00', '2:00', '3:00', '4:00', '5:00', '6:00', '7:00' ,'8:00', '9:00', '10:00', '11:00' ,'12:00', '13:00', '14:00', '15:00' ,'16:00', '17:00', '18:00', '19:00' ,'20:00', '21:00', '22:00', '23:00']; //these are the labels that will appear at the bottom of the chart
+  
+  
+  //define variables to hold shortened arrays. These will be used to draw the graphs.
+  //chart 1
+  var shortened_array_1_values = []; 
+  var shortened_array_2_values = [];
+  var shortened_array_labels = [];
+  //chart 2
+  var shortened_array_1_values2 = []; 
+  var shortened_array_2_values2 = [];
+  var shortened_array_labels2 = [];
+  
+  //create a multi-dimensional array for the chart data
+  var data_chart1 = [];
+  var data_chart2 = [];
+    
+  //holds the options for the chart
+  var options_chart1 = {
+      width: '300px',
+      height: '200px',
+      showArea: true
+    };
+    
+  var options_chart2 = {
+      width: '300px',
+      height: '200px',
+      showArea: true
+    };  
+  
+  /*******************************************************
+  * sampleArray(paramArray, paramNth)
+  * @param {array} inputArray
+  * @param {integer} inputNth
+  * @returns {array}
+  * This function will sample every nth item from an array 
+  * and return a shortened array.
+  ********************************************************/
+  function sampleArray(inputArray, inputNth) 
+  {
+    var outputArray = [];
+    
+    //console.log("The values in the inputArray are " + inputArray);
+    //console.log("The inputNth is " + inputNth);
+    //console.log("The inputArray length is " + inputArray.length);
+    
+    for (var i = 0; i < inputArray.length; i += Number(inputNth))
+    {
+        outputArray.push(inputArray[i]); //add every nth value to the output array
+        //console.log(i + ": Adding the value " + inputArray[i]);
+    }
+    
+    //console.log("The values in the outputArray are " + outputArray);
+    
+    return outputArray; 
+  }
+  
+  /*******************************************************
+  * setChartData()
+  * This function will set/reset the chart data. 
+  ********************************************************/
+  function setChartData()
+  {  
+    //chart 1  
+    shortened_array_1_values = sampleArray(original_array_1_values, nth);
+    shortened_array_2_values = sampleArray(original_array_2_values, nth);
+    shortened_array_labels = sampleArray(original_array_labels, nth);
+    
+    //chart 2
+    shortened_array_1_values2 = sampleArray(original_array_1_values2, nth2);
+    shortened_array_2_values2 = sampleArray(original_array_2_values2, nth2);
+    shortened_array_labels2 = sampleArray(original_array_labels2, nth2);
+    
+    // Example of how to initialize a Chartist.js chart without variables
+    /*
+    var data_chart1 = {
+      labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'],
+      series: [
+          [100, 120, 180, 200, 90],
+          [20, 35, 65, 125, 245]
+      ]
+    };
+    */
+
+    //reset the chart data to an empty prototype
+    //chart 1
+    data_chart1 = [];
+    data_chart1 = {
+      labels: [],
+      series: [
+          [],
+          []
+      ]
+    };
+    //chart 2
+    data_chart2 = [];
+    data_chart2 = {
+      labels: [],
+      series: [
+          [],
+          []
+      ]
+    };
+    
+    //populate the multi-dimensional array of the chart using the arrays
+    //chart 1
+    for (var i = 0; i < shortened_array_1_values.length; i += 1)
+    {
+      data_chart1.series[0].push(shortened_array_1_values[i])
+      data_chart1.series[1].push(shortened_array_2_values[i])
+      data_chart1.labels.push(shortened_array_labels[i])
+    }
+    //chart 2
+    for (var i = 0; i < shortened_array_1_values.length; i += 1)
+    {
+      data_chart2.series[0].push(shortened_array_1_values2[i])
+      data_chart2.series[1].push(shortened_array_2_values2[i])
+      data_chart2.labels.push(shortened_array_labels2[i])
+    }
+    
+    //color the lines
+    //data_chart1.pointStrokeColor[0].push("#1b4ee5"); //blue
+    //data_chart1.pointStrokeColor[1].push("#48ef2b"); //green
+       
+
+    //set the size of chart 1
+    //chart 1
+    var options_chart1 = {
+      width: '300px',
+      height: '200px'
+    };
+    //chart 2
+    var options_chart2 = {
+      width: '300px',
+      height: '200px'
+    };
+    
+    console.log("The chart 1 data is now set to " + JSON.stringify(data_chart1)); //for debug
+    console.log("The chart 1 options are now set to " + JSON.stringify(options_chart1)); //for debug
+    console.log("The chart 2 data is now set to " + JSON.stringify(data_chart2)); //for debug
+    console.log("The chart 2 options are now set to " + JSON.stringify(options_chart2)); //for debug
+  }
+  
+  //set the chart data/settings
+  setChartData();
+  
+  //create chart 1
+  chart1 = new Chartist.Line('#chart1', data_chart1, options_chart1);
+  
+  //create chart 2
+  chart2 = new Chartist.Line('#chart2', data_chart2, options_chart2);
+  
+  //when the user input changes, then update the charts
+  $('#nth_scale').on('input', function() { 
+    nth = $(this).val() // get the current value of the input field.
+    
+    //console.log("The nth value is now set to " + nth); //for debug
+    
+    //calculate the new chart settings
+    setChartData();   
+    
+    //redraw the chart
+    chart1 = new Chartist.Line('#chart1', data_chart1, options_chart1);
+  });
+  
+  //when the user input changes, then update the charts
+  $( "#slider" ).on( "slidechange", function( event, ui ) { 
+    nth2 = ui.value; // get the current value of the slider.
+    
+    console.log("The nth value is now set to " + ui.value); //for debug
+    
+    //calculate the new chart settings
+    setChartData();   
+    
+    //redraw the chart
+    chart2 = new Chartist.Line('#chart2', data_chart2, options_chart2);
+
+  });
+
+  chart1.on('created', function(data) {
+  var transform = {
+    transform: 'translate(' + data.chartRect.width() / chart1.data.labels.length / 2 + ', 0)'
+  };
+  
+  chart1.svg.querySelectorAll('.ct-point').attr(transform);
+  chart1.svg.querySelectorAll('.ct-line').attr(transform);
+  chart1.svg.querySelectorAll('.ct-area').attr(transform);
+});
+
+chart2.on('created', function(data) {
+  var transform = {
+    transform: 'translate(' + data.chartRect.width() / chart2.data.labels.length / 2 + ', 0)'
+  };
+  
+  chart2.svg.querySelectorAll('.ct-point').attr(transform);
+  chart2.svg.querySelectorAll('.ct-line').attr(transform);
+  chart2.svg.querySelectorAll('.ct-area').attr(transform);
+});
+
+chart1.on('draw', function(data) {
+  if(data.type === 'line' || data.type === 'area') {
+    data.element.animate({
+      d: {
+        begin: 2000 * data.index,
+        dur: 2000,
+        from: data.path.clone().scale(1, 0).translate(0, data.chartRect.height()).stringify(),
+        to: data.path.clone().stringify(),
+        easing: Chartist.Svg.Easing.easeOutQuint
+      }
+    });
+  }
+});
+
+chart2.on('draw', function(data) {
+  if(data.type === 'line' || data.type === 'area') {
+    data.element.animate({
+      d: {
+        begin: 2000 * data.index,
+        dur: 2000,
+        from: data.path.clone().scale(1, 0).translate(0, data.chartRect.height()).stringify(),
+        to: data.path.clone().stringify(),
+        easing: Chartist.Svg.Easing.easeOutQuint
+      }
+    });
+  }
+});
+    
+</script>
+
+</body>
+</html>
